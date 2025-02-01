@@ -134,20 +134,11 @@ export function SymbolGrid({
     if (isImageSymbol(symbol)) {
       return (
         <div className="flex items-center justify-center w-full h-full">
-          {/* For development/demo purposes, using a placeholder when no image is available */}
-          {symbol.imageUrl.startsWith("/symbols/") ? (
-            <div className="flex items-center justify-center bg-muted rounded-md w-full h-full">
-              <span className="text-sm text-center px-2">
-                {(symbol as Symbol).text}
-              </span>
-            </div>
-          ) : (
-            <img
-              src={symbol.imageUrl}
-              alt={symbol.text}
-              className="w-full h-full object-contain rounded-md"
-            />
-          )}
+          <img
+            src={symbol.imageUrl}
+            alt={symbol.text}
+            className="w-full h-full object-contain rounded-md"
+          />
         </div>
       );
     }
