@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useStore } from "@/lib/store";
 
@@ -9,16 +7,30 @@ export interface VoiceInfo {
   voiceURI: string;
 }
 
+interface SpeechError {
+  type: "NO_SYNTHESIS" | "NO_VOICES" | "SPEAK_ERROR" | "NOT_SUPPORTED";
+  message: string;
+}
+
 export function useSpeech() {
   const [voices, setVoices] = useState<VoiceInfo[]>([]);
+  const [error, setError] = useState<SpeechError | null>(null);
+  const [isSupported, setIsSupported] = useState(true);
   const settings = useStore((state) => state.settings);
   const speaking = useStore((state) => state.speaking);
   const setSpeaking = useStore((state) => state.setSpeaking);
   const synthRef = useRef<SpeechSynthesis | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    // Check if speech synthesis is supported
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
       synthRef.current = window.speechSynthesis;
+    } else {
+      setIsSupported(false);
+      setError({
+        type: "NOT_SUPPORTED",
+        message: "Text-to-speech não é suportado neste navegador.",
+      });
     }
   }, []);
 
@@ -29,12 +41,23 @@ export function useSpeech() {
 
       const voiceList = synthRef.current.getVoices();
       const availableVoices = voiceList
-        .filter((voice) => voice.lang === "pt-PT") // Only European Portuguese voices
+        .filter((voice) => voice.lang.startsWith("pt"))
         .map((voice) => ({
           name: voice.name,
           lang: voice.lang,
           voiceURI: voice.voiceURI,
         }));
+
+      if (availableVoices.length === 0) {
+        setError({
+          type: "NO_VOICES",
+          message:
+            "Nenhuma voz em português encontrada. Por favor, verifique as configurações de idioma do seu dispositivo.",
+        });
+      } else {
+        setError(null);
+      }
+
       setVoices(availableVoices);
 
       // If no voice is selected and we have Portuguese voices available,
@@ -50,7 +73,10 @@ export function useSpeech() {
     }
 
     if (synthRef.current) {
+      // Initial load
       loadVoices();
+
+      // Handle dynamic voice loading (needed for some browsers)
       synthRef.current.onvoiceschanged = loadVoices;
     }
 
@@ -63,7 +89,14 @@ export function useSpeech() {
 
   const speak = useCallback(
     (text: string) => {
-      if (!text || speaking || !synthRef.current) return;
+      if (!text || speaking) return;
+      if (!synthRef.current) {
+        setError({
+          type: "NO_SYNTHESIS",
+          message: "Serviço de voz não disponível.",
+        });
+        return;
+      }
 
       // Cancel any ongoing speech
       synthRef.current.cancel();
@@ -77,10 +110,10 @@ export function useSpeech() {
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       } else {
-        // If no voice is selected, try to use any available pt-PT voice
-        const ptPTVoice = voiceList.find((voice) => voice.lang === "pt-PT");
-        if (ptPTVoice) {
-          utterance.voice = ptPTVoice;
+        // If no voice is selected, try to use any available pt voice
+        const ptVoice = voiceList.find((voice) => voice.lang.startsWith("pt"));
+        if (ptVoice) {
+          utterance.voice = ptVoice;
         }
       }
 
@@ -88,13 +121,33 @@ export function useSpeech() {
       utterance.rate = settings.speech.rate;
       utterance.volume = settings.speech.volume;
 
-      utterance.onstart = () => setSpeaking(true);
-      utterance.onend = () => setSpeaking(false);
-      utterance.onerror = () => {
+      utterance.onstart = () => {
+        setError(null);
+        setSpeaking(true);
+      };
+
+      utterance.onend = () => {
         setSpeaking(false);
       };
 
-      synthRef.current.speak(utterance);
+      utterance.onerror = (event) => {
+        setSpeaking(false);
+        setError({
+          type: "SPEAK_ERROR",
+          message: "Erro ao reproduzir o texto. Por favor, tente novamente.",
+        });
+        console.error("Speech synthesis error:", event);
+      };
+
+      try {
+        synthRef.current.speak(utterance);
+      } catch (err) {
+        console.error("Speech synthesis error:", err);
+        setError({
+          type: "SPEAK_ERROR",
+          message: "Erro ao iniciar a reprodução de voz.",
+        });
+      }
     },
     [settings.speech, speaking, setSpeaking]
   );
@@ -120,5 +173,7 @@ export function useSpeech() {
     speaking,
     speak,
     stop,
+    error,
+    isSupported,
   };
 }

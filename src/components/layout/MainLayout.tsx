@@ -42,7 +42,6 @@ export function MainLayout({ children }: MainLayoutProps) {
     setIsMobileOpen(!isMobileOpen);
   };
 
-  // Handle resize events
   React.useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
@@ -55,8 +54,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col">
-      <header className="border-b">
+    <div className="fixed inset-0 flex flex-col">
+      <header className="flex-none border-b">
         <div className="flex h-16 items-center px-4 gap-4">
           <Button
             variant="ghost"
@@ -73,8 +72,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* Mobile Sidebar Overlay */}
+      <div className="flex-1 flex overflow-hidden">
         {isMobileOpen && (
           <div
             className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
@@ -82,7 +80,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           />
         )}
 
-        {/* Mobile Sidebar */}
         <div
           className={cn(
             "lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-background border-r",
@@ -103,7 +100,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           </div>
         </div>
 
-        {/* Desktop Layout */}
         <div className="hidden lg:flex flex-1">
           <ResizablePanelGroup direction="horizontal">
             <ResizablePanel
@@ -124,8 +120,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                 >
                   <Sidebar />
                 </div>
-
-                {/* Larger collapse handle */}
                 <div
                   className="h-full flex items-center"
                   role="button"
@@ -157,18 +151,19 @@ export function MainLayout({ children }: MainLayoutProps) {
             <ResizableHandle className="w-px bg-border" />
 
             <ResizablePanel defaultSize={75} className="z-0">
-              <div className="h-full p-4">{children}</div>
+              <div className="h-full overflow-auto">
+                <div className="p-4">{children}</div>
+              </div>
             </ResizablePanel>
           </ResizablePanelGroup>
         </div>
 
-        {/* Mobile/Tablet Main Content */}
-        <div className="flex-1 lg:hidden">
-          <div className="h-full p-4">{children}</div>
+        <div className="flex-1 lg:hidden overflow-auto">
+          <div className="p-4">{children}</div>
         </div>
       </div>
 
-      <footer className="border-t bg-muted/10">
+      <footer className="flex-none border-t bg-muted/10">
         <div className="container flex h-16 items-center px-4">
           <div className="w-full flex items-center gap-2">
             <Input
@@ -200,3 +195,5 @@ export function MainLayout({ children }: MainLayoutProps) {
     </div>
   );
 }
+
+export default MainLayout;
