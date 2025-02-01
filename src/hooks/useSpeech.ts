@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useStore } from "@/lib/store";
 
@@ -6,7 +8,6 @@ export interface VoiceInfo {
   lang: string;
   voiceURI: string;
 }
-
 interface SpeechError {
   type: "NO_SYNTHESIS" | "NO_VOICES" | "SPEAK_ERROR" | "NOT_SUPPORTED";
   message: string;
@@ -41,7 +42,7 @@ export function useSpeech() {
 
       const voiceList = synthRef.current.getVoices();
       const availableVoices = voiceList
-        .filter((voice) => voice.lang.startsWith("pt"))
+        .filter((voice) => voice.lang === "pt-PT") // Only European Portuguese voices
         .map((voice) => ({
           name: voice.name,
           lang: voice.lang,
@@ -73,10 +74,7 @@ export function useSpeech() {
     }
 
     if (synthRef.current) {
-      // Initial load
       loadVoices();
-
-      // Handle dynamic voice loading (needed for some browsers)
       synthRef.current.onvoiceschanged = loadVoices;
     }
 
@@ -110,10 +108,10 @@ export function useSpeech() {
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       } else {
-        // If no voice is selected, try to use any available pt voice
-        const ptVoice = voiceList.find((voice) => voice.lang.startsWith("pt"));
-        if (ptVoice) {
-          utterance.voice = ptVoice;
+        // If no voice is selected, try to use any available pt-PT voice
+        const ptPTVoice = voiceList.find((voice) => voice.lang === "pt-PT");
+        if (ptPTVoice) {
+          utterance.voice = ptPTVoice;
         }
       }
 
@@ -126,9 +124,7 @@ export function useSpeech() {
         setSpeaking(true);
       };
 
-      utterance.onend = () => {
-        setSpeaking(false);
-      };
+      utterance.onend = () => setSpeaking(false);
 
       utterance.onerror = (event) => {
         setSpeaking(false);
