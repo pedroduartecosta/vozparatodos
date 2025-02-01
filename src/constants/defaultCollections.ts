@@ -208,14 +208,6 @@ export const defaultCollections: Collection[] = [
             imageUrl: "/symbols/food/strawberry.png",
           },
           {
-            id: "pineapple",
-            text: "Ananás",
-            description: "Quero ananás",
-            tags: ["fruta", "ananás"],
-            type: "image",
-            imageUrl: "/symbols/food/pineapple.png",
-          },
-          {
             id: "watermelon",
             text: "Melancia",
             description: "Quero melancia",
