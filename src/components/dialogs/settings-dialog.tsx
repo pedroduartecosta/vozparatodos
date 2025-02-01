@@ -56,7 +56,6 @@ export function SettingsDialog() {
           <TabsList>
             <TabsTrigger value="interface">Interface</TabsTrigger>
             <TabsTrigger value="speech">Voz</TabsTrigger>
-            <TabsTrigger value="grid">Grade</TabsTrigger>
           </TabsList>
 
           <TabsContent value="interface" className="space-y-4">
@@ -188,57 +187,6 @@ export function SettingsDialog() {
                 onValueChange={([value]) =>
                   updateSettings({
                     speech: { ...settings.speech, pitch: value },
-                  })
-                }
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="grid" className="space-y-4">
-            <div className="space-y-2">
-              <Label>Tamanho dos Símbolos</Label>
-              <Select
-                value={settings.symbolSize}
-                onValueChange={(value: "small" | "medium" | "large") =>
-                  updateSettings({ symbolSize: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="small">Pequeno</SelectItem>
-                  <SelectItem value="medium">Médio</SelectItem>
-                  <SelectItem value="large">Grande</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Colunas na Grade</Label>
-              <Slider
-                value={[settings.gridSize.columns]}
-                min={2}
-                max={8}
-                step={1}
-                onValueChange={([value]) =>
-                  updateSettings({
-                    gridSize: { ...settings.gridSize, columns: value },
-                  })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Linhas na Grade</Label>
-              <Slider
-                value={[settings.gridSize.rows]}
-                min={2}
-                max={8}
-                step={1}
-                onValueChange={([value]) =>
-                  updateSettings({
-                    gridSize: { ...settings.gridSize, rows: value },
                   })
                 }
               />
