@@ -25,8 +25,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [customText, setCustomText] = React.useState("");
   const { currentMessage, clearMessage } = useCollection();
   const { speak, speaking, stop } = useSpeech();
-  const isDesktop =
-    typeof window !== "undefined" ? window.innerWidth >= 1024 : true;
 
   const handleSpeak = () => {
     if (speaking) {

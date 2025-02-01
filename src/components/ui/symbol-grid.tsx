@@ -1,13 +1,19 @@
+// src/components/ui/symbol-grid.tsx
 "use client";
 
 import React, { JSX } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { useStore } from "@/lib/store";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useCollection } from "@/components/providers/collection-provider";
-import type { Symbol } from "@/types/symbols";
-import { isIconSymbol, isImageSymbol } from "@/types/symbols";
+import type { Symbol, LayoutConfig, PositionedSymbol } from "@/types/symbols";
+import {
+  isIconSymbol,
+  isImageSymbol,
+  isPositionedSymbol,
+} from "@/types/symbols";
 import {
   Utensils,
   Coffee,
@@ -31,13 +37,14 @@ import {
   Battery,
   CircleDot,
   FlaskConical,
-  Beef,
-  Fish,
   Wine,
 } from "lucide-react";
 
 // Icon mapping for symbols
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<
+  string,
+  React.ComponentType<{ size: number; className?: string }>
+> = {
   Utensils,
   Coffee,
   Bath,
@@ -60,16 +67,15 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   Battery,
   CircleDot,
   FlaskConical,
-  Beef,
-  Fish,
   Wine,
 };
 
 interface SymbolGridProps {
-  symbols: Symbol[];
+  symbols: Symbol[] | PositionedSymbol[];
   showLabels?: boolean;
   symbolSize?: "small" | "medium" | "large";
   className?: string;
+  layout?: LayoutConfig;
 }
 
 const sizeClasses = {
@@ -95,22 +101,37 @@ export function SymbolGrid({
   className,
   showLabels,
   symbolSize = "medium",
+  layout,
 }: SymbolGridProps) {
   const { addSymbolToMessage } = useCollection();
   const settings = useStore((state) => state.settings);
   const { speak } = useSpeech();
 
-  const handleSymbolClick = (symbol: Symbol) => {
+  // Helper function to determine if we're working with positioned symbols
+  const hasPositionedSymbols =
+    symbols.length > 0 && isPositionedSymbol(symbols[0]);
+
+  // Get grid classes based on whether we have positioned symbols or not
+  const getGridClasses = () => {
+    if (hasPositionedSymbols && layout) {
+      return `grid gap-2 grid-cols-${layout.columns}`;
+    }
+    return cn("grid w-full", sizeClasses[symbolSize], className);
+  };
+
+  const handleSymbolClick = (symbol: Symbol | PositionedSymbol) => {
     addSymbolToMessage(symbol);
     speak(symbol.text);
   };
 
-  const renderSymbolContent = (symbol: Symbol, size: number): JSX.Element => {
+  const renderSymbolContent = (
+    symbol: Symbol | PositionedSymbol,
+    size: number
+  ): JSX.Element => {
     if (isIconSymbol(symbol)) {
       const IconComponent = iconMap[symbol.icon];
 
       if (!IconComponent) {
-        // Fallback for unknown icons - displays first letter
         return (
           <div
             className={cn(
@@ -134,16 +155,17 @@ export function SymbolGrid({
     if (isImageSymbol(symbol)) {
       return (
         <div className="flex items-center justify-center w-full h-full">
-          <img
+          <Image
             src={symbol.imageUrl}
             alt={symbol.text}
-            className="w-full h-full object-contain rounded-md"
+            width={size}
+            height={size}
+            className="object-contain rounded-md"
           />
         </div>
       );
     }
 
-    // Fallback for unknown symbol types
     return (
       <div className="flex items-center justify-center bg-muted rounded-md w-full h-full">
         <span className="text-sm text-center px-2">
@@ -154,30 +176,42 @@ export function SymbolGrid({
   };
 
   return (
-    <div className={cn("grid w-full", sizeClasses[symbolSize], className)}>
-      {symbols.map((symbol) => (
-        <Card
-          key={symbol.id}
-          className={cn(
-            "flex flex-col items-center justify-center p-2 cursor-pointer hover:border-primary transition-colors"
-          )}
-          onClick={() => handleSymbolClick(symbol)}
-        >
-          <div
+    <div className={getGridClasses()}>
+      {symbols.map((symbol) => {
+        const style = isPositionedSymbol(symbol)
+          ? {
+              gridColumn: `span ${symbol.position.width}`,
+              gridRow: `span ${symbol.position.height}`,
+              gridColumnStart: symbol.position.x + 1,
+              gridRowStart: symbol.position.y + 1,
+            }
+          : undefined;
+
+        return (
+          <Card
+            key={symbol.id}
             className={cn(
-              "relative flex items-center justify-center",
-              symbolSizeClasses[symbolSize]
+              "flex flex-col items-center justify-center p-2 cursor-pointer hover:border-primary transition-colors"
             )}
+            style={style}
+            onClick={() => handleSymbolClick(symbol)}
           >
-            {renderSymbolContent(symbol, iconSizeMap[symbolSize])}
-          </div>
-          {(showLabels ?? settings.showLabels) && (
-            <span className="mt-2 text-sm text-center font-medium">
-              {symbol.text}
-            </span>
-          )}
-        </Card>
-      ))}
+            <div
+              className={cn(
+                "relative flex items-center justify-center",
+                symbolSizeClasses[symbolSize]
+              )}
+            >
+              {renderSymbolContent(symbol, iconSizeMap[symbolSize])}
+            </div>
+            {(showLabels ?? settings.showLabels) && (
+              <span className="mt-2 text-sm text-center font-medium">
+                {symbol.text}
+              </span>
+            )}
+          </Card>
+        );
+      })}
     </div>
   );
 }

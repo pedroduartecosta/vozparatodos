@@ -59,7 +59,7 @@ export function useSpeech() {
         synthRef.current.onvoiceschanged = null;
       }
     };
-  }, [settings.speech, synthRef.current]);
+  }, [settings.speech]);
 
   const speak = useCallback(
     (text: string) => {
@@ -91,7 +91,6 @@ export function useSpeech() {
       utterance.onstart = () => setSpeaking(true);
       utterance.onend = () => setSpeaking(false);
       utterance.onerror = () => {
-        console.error("Speech synthesis error");
         setSpeaking(false);
       };
 

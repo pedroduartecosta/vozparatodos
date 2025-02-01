@@ -1,5 +1,4 @@
 // src/types/symbols.ts
-
 /**
  * Base symbol interface with common properties
  */
@@ -44,12 +43,9 @@ export interface GridPosition {
 /**
  * Symbol with position information for screen layouts
  */
-interface SymbolWithPosition extends BaseSymbol {
-  type: "icon" | "image";
+export type PositionedSymbol = Symbol & {
   position: GridPosition;
-}
-
-export interface PositionedSymbol extends SymbolWithPosition {}
+};
 
 /**
  * Category of symbols
@@ -81,6 +77,7 @@ export interface BaseCollection {
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;
+  type: "dictionary" | "screen";
 }
 
 /**
@@ -131,4 +128,13 @@ export function isIconSymbol(symbol: Symbol): symbol is IconSymbol {
  */
 export function isImageSymbol(symbol: Symbol): symbol is ImageSymbol {
   return symbol.type === "image";
+}
+
+/**
+ * Type guard to check if a symbol has position information
+ */
+export function isPositionedSymbol(
+  symbol: Symbol | PositionedSymbol
+): symbol is PositionedSymbol {
+  return "position" in symbol;
 }
